@@ -1,34 +1,44 @@
 import logging
+import os
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 
-# --- Config ---
+# Load environment variables if needed (optional)
+# from dotenv import load_dotenv
+# load_dotenv()
+
+# === CONFIG ===
 BOT_TOKEN = "7581965351:AAEjl7DeWkMpC7V_MceD5ajDwfCYJRLBWbM"
 SOURCE_CHANNEL_USERNAME = "@modocapital"
-DESTINATION_CHAT_ID = -1002623510061
+DESTINATION_CHAT_ID = -1002623510061  # Must be int
 
-# --- Logging ---
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 
-# --- Handler ---
-async def forward_channel_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = update.channel_post
-    if message and message.chat.username == SOURCE_CHANNEL_USERNAME.strip("@"):
+# === Message Forwarder ===
+async def forward(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.channel_post:
         try:
-            await context.bot.send_message(
+            await context.bot.forward_message(
                 chat_id=DESTINATION_CHAT_ID,
-                text=message.text or message.caption or "📢 (Unsupported message type)"
+                from_chat_id=update.channel_post.chat_id,
+                message_id=update.channel_post.message_id
             )
-            logging.info(f"✅ Forwarded message from @{SOURCE_CHANNEL_USERNAME}")
+            print(f"✅ Forwarded message from {SOURCE_CHANNEL_USERNAME}")
         except Exception as e:
-            logging.error(f"❌ Failed to forward message: {e}")
+            print(f"❌ Failed to forward message: {e}")
 
-# --- Start Bot ---
+# === Bot Setup ===
+async def main():
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
+
+    application.add_handler(MessageHandler(filters.UpdateType.CHANNEL_POST, forward))
+
+    print("🚀 Forward bot running...")
+    await application.run_polling()
+
 if __name__ == "__main__":
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-    app.add_handler(MessageHandler(filters.UpdateType.CHANNEL_POSTS, forward_channel_post))
-    logging.info("🚀 Bot started and listening...")
-    app.run_polling()
+    import asyncio
+    asyncio.run(main())

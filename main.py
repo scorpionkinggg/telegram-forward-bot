@@ -1,16 +1,24 @@
 import logging
 from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
+from telegram.ext import (
+    ApplicationBuilder,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
 
+# --- Configuration ---
 BOT_TOKEN = "7581965351:AAEjl7DeWkMpC7V_MceD5ajDwfCYJRLBWbM"
 SOURCE_CHANNEL_USERNAME = "modocapital"
-DESTINATION_CHAT_ID = -1002623510061  # Ensure this is an int, not a string
+DESTINATION_CHAT_ID = -1002623510061  # Must be int, not string
 
+# --- Logging ---
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO
 )
 
+# --- Handler Function ---
 async def forward_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.channel_post:
         try:
@@ -23,6 +31,7 @@ async def forward_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             print(f"❌ Error forwarding message: {e}")
 
+# --- Main Entry ---
 async def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(MessageHandler(filters.UpdateType.CHANNEL_POST, forward_message))
@@ -32,3 +41,4 @@ async def main():
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
+
